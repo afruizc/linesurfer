@@ -15,3 +15,5 @@ Surf on the lines
 
 - Go to usages.
 - Add e and b movements.
+- Add shift-a and shift-i
+- Add gg and shift-G

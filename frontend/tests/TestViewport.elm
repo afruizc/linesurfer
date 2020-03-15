@@ -1,9 +1,8 @@
 module TestViewport exposing (..)
 
 import Expect
-import Models exposing (Movement(..))
 import Test exposing (Test, describe, test)
-import Viewport exposing (CodeViewer, createViewer, moveCursor)
+import Viewport exposing (CodeViewer, Movement(..), createViewer, moveCursor)
 
 zeroOnePos = ( 0, 1 )
 emptyViewer = createViewer [""]

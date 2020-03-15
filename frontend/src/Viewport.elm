@@ -6,9 +6,20 @@ module Viewport exposing (..)
 import Array exposing (Array)
 import Html exposing (Html, div, pre, text)
 import Html.Attributes exposing (style)
-import JumpTable exposing (JumpTable, getJump)
-import Models exposing (Movement(..), Msg, Pos, Size)
+import JumpTable exposing (JumpTable, addJump, createDefaultJumpTable, getJump)
+import Models exposing (Pos, Size)
 import Styles exposing (gridCss)
+
+
+type Movement = RightOneChar
+              | LeftOneChar
+              | UpOneChar
+              | DownOneChar
+
+
+type VMsg = MoveCursor Movement
+           | JumpCursor
+           | NoOp
 
 
 -- Manages information about what to display and
@@ -17,6 +28,7 @@ type alias CodeViewer =
     { content: List String
     , size: Size
     , cursorPos: Pos
+    , jumpTable: JumpTable
     }
 
 
@@ -24,11 +36,22 @@ createViewer : List String -> CodeViewer
 createViewer s =
     let
         maxWidth = List.map String.length s |> List.foldr max -1
+        height =  List.length s
+        initialJumpTable = createDefaultJumpTable {width=maxWidth, height=height}
     in
         { content = s
         , size = { width=maxWidth, height=List.length s }
         , cursorPos= ( 0 , 0 )
+        , jumpTable = initialJumpTable |> addJump (0, 0) (0, 1)
         }
+
+
+updateViewer : VMsg -> CodeViewer -> CodeViewer
+updateViewer msg viewer =
+    case msg of
+        (MoveCursor dir) -> ( moveCursor dir viewer )
+        JumpCursor ->( jumpCursor viewer.jumpTable viewer )
+        NoOp -> viewer
 
 
 moveCursor : Movement -> CodeViewer -> CodeViewer
@@ -55,7 +78,7 @@ jumpCursor table viewer =
     { viewer | cursorPos = ( getJump viewer.cursorPos table ) }
 
 
-render : CodeViewer -> Html Msg
+render : CodeViewer -> Html msg
 render viewer =
     div []
         [ textPanel viewer
@@ -63,7 +86,7 @@ render viewer =
         ]
 
 
-textPanel : CodeViewer -> Html Msg
+textPanel : CodeViewer -> Html msg
 textPanel viewer =
     div ( style "font-size" "1.2rem" ::
             [ style "position" "absolute"
@@ -78,7 +101,7 @@ from2Dto1D width (x, y) =
     width * x + y
 
 
-gridDivs : CodeViewer -> List ( Html Msg )
+gridDivs : CodeViewer -> List ( Html msg )
 gridDivs viewer =
     let
         size = viewer.size.width * viewer.size.height
@@ -98,7 +121,26 @@ filledCell
           []
 
 
-gridPanel : CodeViewer -> Html Msg
+gridPanel : CodeViewer -> Html msg
 gridPanel viewer =
     div ( gridCss viewer.size 11.5 20 )
         ( gridDivs viewer )
+
+
+
+keyToAction : String -> VMsg
+keyToAction string =
+    case String.uncons string of
+        Just ( 'j', "" ) ->
+            MoveCursor DownOneChar
+        Just ( 'k', "" ) ->
+            MoveCursor UpOneChar
+        Just ( 'h', "" ) ->
+            MoveCursor LeftOneChar
+        Just ( 'l', "" ) ->
+            MoveCursor RightOneChar
+        Just ( 'B', "" ) ->
+            JumpCursor
+        _ ->
+            NoOp
+

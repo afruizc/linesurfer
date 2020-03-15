@@ -8,7 +8,6 @@ type JumpTo = Stay
             | GoTo Pos
 
 
-
 type alias JumpTable = Dict Pos JumpTo
 
 
