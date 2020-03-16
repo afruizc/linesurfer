@@ -17,9 +17,9 @@ type Movement = RightOneChar
               | DownOneChar
 
 
-type VMsg = MoveCursor Movement
-           | JumpCursor
-           | NoOp
+type Msg = MoveCursor Movement
+         | JumpCursor
+         | NoOp
 
 
 -- Manages information about what to display and
@@ -46,7 +46,7 @@ createViewer s =
         }
 
 
-updateViewer : VMsg -> CodeViewer -> CodeViewer
+updateViewer : Msg -> CodeViewer -> CodeViewer
 updateViewer msg viewer =
     case msg of
         (MoveCursor dir) -> ( moveCursor dir viewer )
@@ -128,7 +128,7 @@ gridPanel viewer =
 
 
 
-keyToAction : String -> VMsg
+keyToAction : String -> Msg
 keyToAction string =
     case String.uncons string of
         Just ( 'j', "" ) ->

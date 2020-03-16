@@ -4,8 +4,13 @@ import Browser
 import Browser.Events
 import Html exposing (Html)
 
-import Json.Decode as Decode
-import Viewport exposing (CodeViewer, Movement(..), VMsg, createViewer, keyToAction, render, updateViewer)
+import Http
+import Json.Decode as Decode exposing (Decoder, field, list, string)
+import Viewport exposing (CodeViewer, Movement(..), createViewer, keyToAction, render, updateViewer)
+
+
+type alias SourceProgram = List String
+type alias Url = String
 
 
 ---- MODEL ----
@@ -16,67 +21,49 @@ type alias Model =
 
 ---- MSG ----
 type Msg
-    = ViewerMsg VMsg
+    = ViewerMsg Viewport.Msg
+    | GotSourceCode (Result Http.Error SourceProgram)
 
 
-initialViewer = createViewer
-    [ "package main"
-    , ""
-    , "import ("
-    , "\t\"encoding/json\""
-    , "\t\"fmt\""
-    , "\t\"io/ioutil\""
-    , "\t\"net/http\""
-    , "\t\"strings\"",
-    ")",
-    "",
-    "func main() {",
-    "\tfmt.Println(\"Connect here\")",
-    "\thttp.HandleFunc(\"/\", HelloServer)",
-    "\t_ = http.ListenAndServe(\":8080\", nil)",
-    "}",
-    "",
-    "func checkErr(err error) {",
-    "\tif err != nil {",
-    "\t\tpanic(err)",
-    "\t}",
-    "}",
-    "",
-    "func splitLines(data []byte) []string {",
-    "\tdataStr := string(data)",
-    "",
-    "\treturn strings.Split(dataStr, \"\\n\")",
-    "}",
-    "",
-    "func HelloServer(w http.ResponseWriter, r *http.Request) {",
-    "\tdata, err := ioutil.ReadFile(\"main.go\")",
-    "\tcheckErr(err)",
-    "",
-    "\tlinesList := splitLines(data)",
-    "",
-    "\tjsonData, err := json.Marshal(linesList)",
-    "\tcheckErr(err)",
-    "",
-    "\t_, _ = w.Write(jsonData)",
-    "}",
-    ""
-    ]
+initialViewer = createViewer []
+
 
 initialModel =
     { viewer = initialViewer
     }
 
 
+fetchFile : Url -> Cmd Msg
+fetchFile url =
+    Http.get
+        { url = url
+        , expect = Http.expectJson GotSourceCode fileDecoder
+        }
+
+
+fileDecoder : Decoder SourceProgram
+fileDecoder =
+    field  "data" (list string)
+
+
 init : ( Model, Cmd Msg )
 init =
-    ( initialModel , Cmd.none )
+    ( initialModel , fetchFile "http://localhost:8080" )
 
 
 ---- UPDATE ----
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        (ViewerMsg vmsg) -> ({ model | viewer = ( updateViewer vmsg model.viewer )}, Cmd.none)
+        ViewerMsg vmsg -> ({ model | viewer = ( updateViewer vmsg model.viewer )}, Cmd.none)
+        GotSourceCode result -> (updateModelIfSuccess result model, Cmd.none)
+
+
+updateModelIfSuccess : (Result Http.Error SourceProgram) -> Model -> Model
+updateModelIfSuccess result model =
+    case result of
+        Ok data -> { model | viewer = createViewer data }
+        Err err -> { model | viewer = createViewer ["error loading data: " ++ Debug.toString err] }
 
 
 ---- VIEW ----

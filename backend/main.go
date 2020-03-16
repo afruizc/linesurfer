@@ -32,8 +32,15 @@ func HelloServer(w http.ResponseWriter, r *http.Request) {
 
 	linesList := splitLines(data)
 
-	jsonData, err := json.Marshal(linesList)
+	res := make(map[string]interface{})
+	res["data"] = linesList
+
+	jsonData, err := json.Marshal(res)
 	checkErr(err)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
 	_, _ = w.Write(jsonData)
 }
