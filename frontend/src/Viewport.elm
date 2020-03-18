@@ -104,19 +104,19 @@ from2Dto1D width (x, y) =
 gridDivs : CodeViewer -> List ( Html msg )
 gridDivs viewer =
     let
-        size = viewer.size.width * viewer.size.height
+        cellCount = viewer.size.width * viewer.size.height
     in
-    Array.repeat size cell
-        |> Array.set (from2Dto1D viewer.size.width viewer.cursorPos) filledCell
+    Array.repeat cellCount emptyCell
+        |> Array.set (from2Dto1D viewer.size.width viewer.cursorPos) focusedCell
         |> Array.toList
 
 
-cell
+emptyCell
     = div []
           []
 
 
-filledCell
+focusedCell
     = div [ style "background-color" "rgba(1, 1, 1, 0.5)"]
           []
 
