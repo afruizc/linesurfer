@@ -6,26 +6,26 @@ import Html exposing (Html)
 
 import Http
 import Json.Decode as Decode exposing (Decoder, field, list, string)
-import Viewport exposing (CodeViewer, Movement(..), createViewer, keyToAction, render, updateViewer)
+import Models exposing (SourceCode)
+import CodeViewer exposing (Viewport, Movement(..), createCodeViewer, keyToAction, render, updateViewer)
 
 
-type alias SourceProgram = List String
 type alias Url = String
 
 
 ---- MODEL ----
 type alias Model =
-    { viewer : CodeViewer
+    { viewer : Viewport
     }
 
 
 ---- MSG ----
 type Msg
-    = ViewerMsg Viewport.Msg
-    | GotSourceCode (Result Http.Error SourceProgram)
+    = ViewerMsg CodeViewer.Msg
+    | GotSourceCode (Result Http.Error SourceCode)
 
 
-initialViewer = createViewer []
+initialViewer = createCodeViewer []
 
 
 initialModel =
@@ -41,7 +41,7 @@ fetchFile url =
         }
 
 
-fileDecoder : Decoder SourceProgram
+fileDecoder : Decoder SourceCode
 fileDecoder =
     field  "data" (list string)
 
@@ -59,11 +59,11 @@ update msg model =
         GotSourceCode result -> (updateModelIfSuccess result model, Cmd.none)
 
 
-updateModelIfSuccess : (Result Http.Error SourceProgram) -> Model -> Model
+updateModelIfSuccess : (Result Http.Error SourceCode) -> Model -> Model
 updateModelIfSuccess result model =
     case result of
-        Ok data -> { model | viewer = createViewer data }
-        Err err -> { model | viewer = createViewer ["error loading data: " ++ Debug.toString err] }
+        Ok data -> { model | viewer = createCodeViewer data }
+        Err err -> { model | viewer = createCodeViewer ["error loading data: " ++ Debug.toString err] }
 
 
 ---- VIEW ----

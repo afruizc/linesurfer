@@ -1,7 +1,10 @@
 module Models exposing (..)
 
 
-type alias Pos = ( Int, Int )
+type alias Pos =
+    { x: Int
+    , y: Int
+    }
 
 
 type alias Size =
@@ -9,3 +12,11 @@ type alias Size =
     , height: Int
     }
 
+
+type alias Range =
+    { begin: Int
+    , end: Int
+    }
+
+
+type alias SourceCode = List String

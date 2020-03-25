@@ -8,7 +8,7 @@ type JumpTo = Stay
             | GoTo Pos
 
 
-type alias JumpTable = Dict Pos JumpTo
+type alias JumpTable = Dict (Int, Int) JumpTo
 
 
 cartesian : List a -> List b -> List (a,b)
@@ -29,15 +29,18 @@ createDefaultJumpTable size =
         Dict.fromList <|  List.map getEntry allPairs
 
 
-getJump : Pos -> JumpTable -> Pos
+getJump : (Int, Int) -> JumpTable -> Pos
 getJump pos table =
     case Dict.get pos table of
-        ( Just Stay ) -> pos
+        ( Just Stay ) -> tupleToRecord pos
         ( Just ( GoTo newPos ) ) -> newPos
-        _ -> ( -1, -1 )
+        _ -> { x = -1, y = -1 }
 
 
-addJump : Pos -> Pos -> JumpTable -> JumpTable
+addJump : (Int, Int) -> Pos -> JumpTable -> JumpTable
 addJump pos jumpToPos table =
     Dict.insert pos ( GoTo jumpToPos ) table
 
+
+tupleToRecord (x, y) =
+    {x = x, y = y}
