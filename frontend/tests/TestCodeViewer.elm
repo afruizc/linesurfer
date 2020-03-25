@@ -3,7 +3,7 @@ module TestCodeViewer exposing (..)
 import Expect
 import Models exposing (Pos, Range, Size, SourceCode)
 import Test exposing (Test, describe, test)
-import CodeViewer exposing (CodeViewer, Movement(..), createCodeViewer, moveCursor)
+import CodeViewer exposing (CodeViewer, Movement(..), create, moveCursor)
 
 
 newViewer : SourceCode -> Size -> SourceCode -> Range -> Pos -> CodeViewer
@@ -32,7 +32,7 @@ testCreateEmptyViewer =
     describe "empty viewer is created"
         [ test "size and viewer have right thangs" <|
             \_ ->
-                createCodeViewer inputViewportHeight inputText
+                create inputViewportHeight inputText
                     |> Expect.equal outputViewer
         ]
 
@@ -52,7 +52,7 @@ testCreateViewerOneLine =
     describe "one line viewer is created"
         [ test "all the attributes are set" <|
             \_ ->
-                createCodeViewer inputViewportHeight inputText
+                create inputViewportHeight inputText
                     |> Expect.equal outputViewer
         ]
 
@@ -73,7 +73,7 @@ testCreateViewerTwoLines =
     describe "two line viewer is created"
         [ test "all the attributes are set" <|
             \_ ->
-                createCodeViewer inputViewportHeight inputText
+                create inputViewportHeight inputText
                     |> Expect.equal outputViewer
         ]
 
@@ -88,13 +88,13 @@ testCreateViewerThreeLines =
             newViewer ["a", "b"]
                       { width = 1, height = inputViewportHeight }
                       ["a", "b", "c"]
-                      { begin = 0, end = 1 }
+                      { begin = 0, end = inputViewportHeight }
                       { x = 0, y = 0 }
     in
     describe "three line viewer is created"
         [ test "all the attributes are set" <|
             \_ ->
-                createCodeViewer inputViewportHeight inputText
+                create inputViewportHeight inputText
                     |> Expect.equal outputViewer
         ]
 
@@ -189,7 +189,7 @@ testMoveCursorTwoLinesTwoLetters =
                       { width = 2, height = 1 }
                       ["ab", "cd"]
                       { begin = 1, end = 2 }
-                      { x = 1, y = 0 }
+                      { x = 0, y = 0 }
     in
     describe "move down on one line show next line"
         [ test "all the attributes are set" <|
@@ -197,3 +197,53 @@ testMoveCursorTwoLinesTwoLetters =
                 moveCursor DownOneChar inputViewer
                     |> Expect.equal outputViewer
         ]
+
+--
+--testMoveCursorUpTwoLinesTwoLetters : Test
+--testMoveCursorUpTwoLinesTwoLetters =
+--    let
+--        inputViewer =
+--            newViewer ["cd"]
+--                      { width = 2, height = 1 }
+--                      ["ab", "cd"]
+--                      { begin = 1, end = 2 }
+--                      { x = 1, y = 0 }
+--
+--        outputViewer =
+--            newViewer ["ab"]
+--                      { width = 2, height = 1 }
+--                      ["ab", "cd"]
+--                      { begin = 0, end = 1 }
+--                      { x = 0, y = 0 }
+--    in
+--    describe "move up on one line show next line"
+--        [ test "all the attributes are set" <|
+--            \_ ->
+--                moveCursor UpOneChar inputViewer
+--                    |> Expect.equal outputViewer
+--        ]
+--
+--
+--testMoveCursorUpFourLinesShowTwo : Test
+--testMoveCursorUpFourLinesShowTwo =
+--    let
+--        inputViewer =
+--            newViewer [ "a", "b" ]
+--                      { width = 1, height = 2 }
+--                      [ "a", "b", "c" ]
+--                      { begin = 0, end = 2 }
+--                      { x = 1, y = 0 }
+--
+--        outputViewer =
+--            newViewer [ "b", "c" ]
+--                      { width = 1, height = 2 }
+--                      [ "a", "b", "c" ]
+--                      { begin = 1, end = 3 }
+--                      { x = 2, y = 0 }
+--    in
+--    describe "move down on four line show three lines"
+--        [ test "all the attributes are set" <|
+--            \_ ->
+--                moveCursor DownOneChar inputViewer
+--                    |> Expect.equal outputViewer
+--        ]

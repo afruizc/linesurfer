@@ -2,12 +2,12 @@ module Main exposing (..)
 
 import Browser
 import Browser.Events
+import CodeViewer exposing (CodeViewer)
 import Html exposing (Html)
 
 import Http
 import Json.Decode as Decode exposing (Decoder, field, list, string)
 import Models exposing (SourceCode)
-import CodeViewer exposing (Viewport, Movement(..), createCodeViewer, keyToAction, render, updateViewer)
 
 
 type alias Url = String
@@ -15,7 +15,7 @@ type alias Url = String
 
 ---- MODEL ----
 type alias Model =
-    { viewer : Viewport
+    { viewer : CodeViewer
     }
 
 
@@ -25,7 +25,10 @@ type Msg
     | GotSourceCode (Result Http.Error SourceCode)
 
 
-initialViewer = createCodeViewer []
+defaultHeight = 2
+
+
+initialViewer = CodeViewer.create defaultHeight []
 
 
 initialModel =
@@ -55,21 +58,24 @@ init =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        ViewerMsg vmsg -> ({ model | viewer = ( updateViewer vmsg model.viewer )}, Cmd.none)
+        ViewerMsg vmsg -> ({ model
+              | viewer = ( CodeViewer.update vmsg model.viewer )
+            } , Cmd.none)
         GotSourceCode result -> (updateModelIfSuccess result model, Cmd.none)
 
 
 updateModelIfSuccess : (Result Http.Error SourceCode) -> Model -> Model
 updateModelIfSuccess result model =
     case result of
-        Ok data -> { model | viewer = createCodeViewer data }
-        Err err -> { model | viewer = createCodeViewer ["error loading data: " ++ Debug.toString err] }
+        Ok data -> { model | viewer = CodeViewer.create defaultHeight data }
+        Err err -> { model | viewer = CodeViewer.create defaultHeight
+                                        ["error loading data: " ++ Debug.toString err] }
 
 
 ---- VIEW ----
 view : Model -> Html Msg
 view model =
-    render model.viewer
+    CodeViewer.render model.viewer
 
 
 ---- PROGRAM ----
@@ -92,7 +98,7 @@ keyDecoder : Decode.Decoder Msg
 keyDecoder =
     let
         wrapVMsg str =
-            ViewerMsg (keyToAction str)
+            ViewerMsg (CodeViewer.keyToAction str)
     in
     Decode.map wrapVMsg (Decode.field "key" Decode.string)
 
