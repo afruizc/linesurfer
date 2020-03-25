@@ -198,40 +198,65 @@ testMoveCursorTwoLinesTwoLetters =
                     |> Expect.equal outputViewer
         ]
 
---
---testMoveCursorUpTwoLinesTwoLetters : Test
---testMoveCursorUpTwoLinesTwoLetters =
+
+testMoveCursorUpTwoLinesTwoLetters : Test
+testMoveCursorUpTwoLinesTwoLetters =
+    let
+        inputViewer =
+            newViewer ["cd"]
+                      { width = 2, height = 1 }
+                      ["ab", "cd"]
+                      { begin = 1, end = 2 }
+                      { x = 0, y = 0 }
+
+        outputViewer =
+            newViewer ["ab"]
+                      { width = 2, height = 1 }
+                      ["ab", "cd"]
+                      { begin = 0, end = 1 }
+                      { x = 0, y = 0 }
+    in
+    describe "move up on one line show next line"
+        [ test "all the attributes are set" <|
+            \_ ->
+                moveCursor UpOneChar inputViewer
+                    |> Expect.equal outputViewer
+        ]
+
+
+testMoveCursorUpThreeLinesShowTwo : Test
+testMoveCursorUpThreeLinesShowTwo =
+    let
+        inputViewer =
+            newViewer [ "a", "b" ]
+                      { width = 1, height = 2 }
+                      [ "a", "b", "c" ]
+                      { begin = 0, end = 2 }
+                      { x = 1, y = 0 }
+
+        outputViewer =
+            newViewer [ "b", "c" ]
+                      { width = 1, height = 2 }
+                      [ "a", "b", "c" ]
+                      { begin = 1, end = 3 }
+                      { x = 1, y = 0 }
+    in
+    describe "move down on three lines change two"
+        [ test "all the attributes are set" <|
+            \_ ->
+                moveCursor DownOneChar inputViewer
+                    |> Expect.equal outputViewer
+        ]
+
+
+--testMoveCursorLastLineDontMove : Test
+--testMoveCursorLastLineDontMove =
 --    let
 --        inputViewer =
---            newViewer ["cd"]
---                      { width = 2, height = 1 }
---                      ["ab", "cd"]
---                      { begin = 1, end = 2 }
---                      { x = 1, y = 0 }
---
---        outputViewer =
---            newViewer ["ab"]
---                      { width = 2, height = 1 }
---                      ["ab", "cd"]
---                      { begin = 0, end = 1 }
---                      { x = 0, y = 0 }
---    in
---    describe "move up on one line show next line"
---        [ test "all the attributes are set" <|
---            \_ ->
---                moveCursor UpOneChar inputViewer
---                    |> Expect.equal outputViewer
---        ]
---
---
---testMoveCursorUpFourLinesShowTwo : Test
---testMoveCursorUpFourLinesShowTwo =
---    let
---        inputViewer =
---            newViewer [ "a", "b" ]
+--            newViewer [ "b", "c" ]
 --                      { width = 1, height = 2 }
 --                      [ "a", "b", "c" ]
---                      { begin = 0, end = 2 }
+--                      { begin = 1, end = 3 }
 --                      { x = 1, y = 0 }
 --
 --        outputViewer =
@@ -239,9 +264,9 @@ testMoveCursorTwoLinesTwoLetters =
 --                      { width = 1, height = 2 }
 --                      [ "a", "b", "c" ]
 --                      { begin = 1, end = 3 }
---                      { x = 2, y = 0 }
+--                      { x = 1, y = 0 }
 --    in
---    describe "move down on four line show three lines"
+--    describe "move down on three lines no change"
 --        [ test "all the attributes are set" <|
 --            \_ ->
 --                moveCursor DownOneChar inputViewer

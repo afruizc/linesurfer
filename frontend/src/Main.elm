@@ -25,7 +25,7 @@ type Msg
     | GotSourceCode (Result Http.Error SourceCode)
 
 
-defaultHeight = 2
+defaultHeight = 20
 
 
 initialViewer = CodeViewer.create defaultHeight []
