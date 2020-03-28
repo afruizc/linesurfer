@@ -2,18 +2,21 @@ module Styles exposing (..)
 
 import Html exposing (Html)
 import Html.Attributes exposing (style)
-import Models exposing (Size)
+import Location exposing (Size)
 
 
-repeat n u ms =
-    "repeat(" ++ String.fromInt n ++ ", " ++ String.fromFloat u ++ ms ++ ")"
+repeat times value unit =
+    "repeat(" ++ String.fromInt times ++ ", " ++ String.fromFloat value ++ unit ++ ")"
 
 
-gridCss : Size -> Float -> Float -> List (Html.Attribute msg)
-gridCss size w h =
+gridCss : Size -> List (Html.Attribute msg)
+gridCss size =
     [ style "display" "grid"
-    , style "grid-template-columns" (repeat size.width w "px")
-    , style "grid-template-rows" (repeat size.height h "px")
+    , style "grid-template-columns" (repeat size.width 1 "ch")
+    , style "justify-items" "center"
+    , style "align-items" "center"
+    , style "font" "1.2rem monospace"
+    , style "grid-template-rows" (repeat size.height 20 "px")
     ]
 
 

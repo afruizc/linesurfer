@@ -6,10 +6,10 @@ Surf on the lines
 
 - ~~Display small file.~~
 - ~~Take files from HTTP.~~
-- Display one big file. (adapt viewport).
+- ~~Display one big file. (adapt viewport).~~
+- ~~Color a file.~~
 - Display multiple files.
 - Jump across files.
-- Color a file.
 
 # Next release
 

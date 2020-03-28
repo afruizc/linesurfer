@@ -4,7 +4,7 @@ import Array exposing (Array)
 import CodeViewer exposing (CodeViewer, Movement(..), create, moveCursor)
 import Expect
 import JumpTable exposing (createDefaultJumpTable)
-import Models exposing (Pos, Range, Size, SourceCode)
+import Location exposing (Pos, Range, Size, SourceCode)
 import Test exposing (Test, describe, test)
 
 
