@@ -42,12 +42,13 @@ expectedViewer =
     { newViewer | displayRange = { begin = 1, end = 2 } }
 
 
-testJumpTable : Test
-testJumpTable =
-    describe "Jump updates code viewer"
-        [ test "jump outside range" <|
-            \_ ->
-                newViewer
-                    |> CodeViewer.update CodeViewer.JumpCursor
-                    |> Expect.equal expectedViewer
-        ]
+
+--testJumpTable : Test
+--testJumpTable =
+--    describe "Jump updates code viewer"
+--        [ test "jump outside range" <|
+--            \_ ->
+--                newViewer
+--                    |> CodeViewer.update CodeViewer.JumpCursor
+--                    |> Expect.equal expectedViewer
+--        ]

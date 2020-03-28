@@ -1,11 +1,23 @@
 module CodeViewer exposing (..)
 
 import Array
-import Html exposing (Html, div, pre, text)
+import Html exposing (Html, div)
 import Html.Attributes exposing (style)
+import Html.Parser
+import Html.Parser.Util
 import JumpTable exposing (JumpTable, createDefaultJumpTable)
 import Models exposing (Pos, Range, Size, SourceCode)
 import Styles exposing (gridCss)
+
+
+type alias CodeViewer =
+    { viewportText : SourceCode
+    , cursor : Pos
+    , displayRange : Range
+    , content : SourceCode
+    , viewportSize : Size
+    , jumpTable : JumpTable
+    }
 
 
 type Movement
@@ -19,16 +31,6 @@ type Msg
     = MoveCursor Movement
       --| JumpCursor
     | NoOp
-
-
-type alias CodeViewer =
-    { viewportText : SourceCode
-    , cursor : Pos
-    , displayRange : Range
-    , content : SourceCode
-    , viewportSize : Size
-    , jumpTable : JumpTable
-    }
 
 
 create : Int -> SourceCode -> CodeViewer
@@ -160,21 +162,32 @@ calculateNewViewer newCursor newRange viewer =
 render : CodeViewer -> Html msg
 render viewer =
     div []
-        [ textPanel viewer.viewportText
+        [ textPanel viewer
         , gridPanel viewer
         ]
 
 
-textPanel : SourceCode -> Html msg
-textPanel srcCode =
+textPanel : CodeViewer -> Html msg
+textPanel viewer =
     div
-        (style "font-size" "1.2rem"
-            :: [ style "position" "absolute"
-               ]
-        )
-        [ pre [ style "font-family" "courier" ]
-            [ text (String.join "\n" srcCode) ]
+        [ style "font-family" "courier"
+        , style "position" "absolute"
         ]
+        (textHtml
+            (String.join "\n"
+                (List.concat [ viewer.viewportText, [ "</pre>" ] ])
+            )
+        )
+
+
+textHtml : String -> List (Html.Html msg)
+textHtml t =
+    case Html.Parser.run t of
+        Ok nodes ->
+            Html.Parser.Util.toVirtualDom nodes
+
+        Err err ->
+            [ Html.pre [] [ Html.text <| Debug.toString err ] ]
 
 
 gridPanel : CodeViewer -> Html msg

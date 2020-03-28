@@ -3,9 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/alecthomas/chroma"
+	"github.com/alecthomas/chroma/lexers"
 	"io/ioutil"
 	"net/http"
-	"strings"
 )
 
 func main() {
@@ -20,20 +21,31 @@ func checkErr(err error) {
 	}
 }
 
-func splitLines(data []byte) []string {
-	dataStr := string(data)
+func getTokens(source string) ([]chroma.Token, error) {
+	lexer := lexers.Get("go")
 
-	return strings.Split(dataStr, "\n")
+	iterator, err := lexer.Tokenise(nil, source)
+	if err != nil {
+		return nil, err
+	}
+
+	tokens := iterator.Tokens()
+	fmt.Println(tokens)
+
+	return tokens, nil
 }
 
 func HelloServer(w http.ResponseWriter, r *http.Request) {
 	data, err := ioutil.ReadFile("main.go")
 	checkErr(err)
 
-	linesList := splitLines(data)
+	lines, err := getTokens(string(data))
+	if err != nil {
+		panic(err)
+	}
 
 	res := make(map[string]interface{})
-	res["data"] = linesList
+	res["data"] = lines
 
 	jsonData, err := json.Marshal(res)
 	checkErr(err)
