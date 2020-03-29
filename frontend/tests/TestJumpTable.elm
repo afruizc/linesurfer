@@ -1,14 +1,28 @@
 module TestJumpTable exposing (..)
 
-import CodeViewer
-import Dict
 import Expect
-import JumpTable exposing (JumpTo(..), addJump, createDefaultJumpTable, getJump)
+import JumpTable exposing (initJumpTable)
+import Models exposing (JumpTo(..))
 import Test exposing (Test, describe, test)
 
 
 emptyJumpTable =
-    createDefaultJumpTable { width = 5, height = 5 }
+    initJumpTable []
+
+
+someJumpsJumpTable =
+    initJumpTable
+        [ ( ( 0, 0 ), GoTo ( 1, 2 ) )
+        , ( ( 2, 3 ), GoTo ( 5, 5 ) )
+        ]
+
+
+zeroZero =
+    { x = 0, y = 0 }
+
+
+tenTen =
+    { x = 10, y = 10 }
 
 
 jumpTableTest : Test
@@ -16,39 +30,18 @@ jumpTableTest =
     describe "Create jump table"
         [ test "create default" <|
             \_ ->
-                { width = 3, height = 3 }
-                    |> createDefaultJumpTable
-                    |> Dict.values
-                    |> Expect.equal (List.repeat 9 Stay)
+                emptyJumpTable
+                    |> JumpTable.get zeroZero
+                    |> Expect.equal zeroZero
         , test "Get jump to same pos" <|
             \_ ->
                 emptyJumpTable
-                    |> getJump ( 1, 1 )
-                    |> Expect.equal { x = 1, y = 1 }
+                    |> JumpTable.get tenTen
+                    |> Expect.equal tenTen
         , test "Get add jumps other pos" <|
             \_ ->
                 emptyJumpTable
-                    |> addJump ( 1, 1 ) { x = 3, y = 3 }
-                    |> getJump ( 1, 1 )
-                    |> Expect.equal { x = 3, y = 3 }
+                    |> JumpTable.insert zeroZero tenTen
+                    |> JumpTable.get zeroZero
+                    |> Expect.equal tenTen
         ]
-
-
-newViewer =
-    CodeViewer.create 1 [ "a", "b" ]
-
-
-expectedViewer =
-    { newViewer | displayRange = { begin = 1, end = 2 } }
-
-
-
---testJumpTable : Test
---testJumpTable =
---    describe "Jump updates code viewer"
---        [ test "jump outside range" <|
---            \_ ->
---                newViewer
---                    |> CodeViewer.update CodeViewer.JumpCursor
---                    |> Expect.equal expectedViewer
---        ]

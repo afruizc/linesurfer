@@ -2,6 +2,7 @@ module Models exposing (..)
 
 import Array exposing (Array)
 import Dict exposing (Dict)
+import Location
 
 
 type alias Token =
@@ -23,3 +24,22 @@ type alias Color =
 
 type alias ColorTable =
     Dict String Color
+
+
+type alias Model =
+    { sourceCode : SourceTable
+    , absCursor : Location.Pos -- This is a computed property
+    , cursor : Location.Pos
+    , rowOffset : Int
+    , viewportSize : Location.Size
+    , colorTable : ColorTable
+    , jumpTable : JumpTable
+    }
+
+
+type JumpTo
+    = GoTo ( Int, Int )
+
+
+type alias JumpTable =
+    Dict ( Int, Int ) JumpTo

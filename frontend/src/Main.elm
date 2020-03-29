@@ -1,6 +1,7 @@
 module Main exposing (..)
 
 import Browser
+import Models exposing (Model)
 import SourceProgram
 
 
@@ -12,7 +13,7 @@ type alias Url =
 ---- PROGRAM ----
 
 
-main : Program () SourceProgram.Model SourceProgram.Msg
+main : Program () Model SourceProgram.Msg
 main =
     Browser.element
         { view = SourceProgram.view

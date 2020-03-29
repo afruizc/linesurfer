@@ -29,10 +29,24 @@ func getTokens(source string) ([]chroma.Token, error) {
 		return nil, err
 	}
 
-	tokens := iterator.Tokens()
+	tokens := replaceTabsForSpaces(iterator.Tokens())
 	fmt.Println(tokens)
 
 	return tokens, nil
+}
+
+func replaceTabsForSpaces(tokens []chroma.Token) []chroma.Token {
+	res := make([]chroma.Token, 0)
+
+	for _, t := range tokens {
+		if t.Value == "\t" {
+			t.Value = "    ";
+		}
+
+		res = append(res, t)
+	}
+
+	return res
 }
 
 func HelloServer(w http.ResponseWriter, r *http.Request) {

@@ -1,60 +1,58 @@
 module JumpTable exposing (..)
 
+import Array
 import Dict exposing (Dict)
-import Location exposing (Pos, Size)
+import Location
+import Models exposing (JumpTable, JumpTo(..), Model)
 
 
-type JumpTo
-    = Stay
-    | GoTo Pos
+initJumpTable : List ( ( Int, Int ), JumpTo ) -> JumpTable
+initJumpTable initList =
+    Dict.fromList initList
 
 
-type alias JumpTable =
-    Dict ( Int, Int ) JumpTo
+
+-- Moves the cursor to the absolute position
+-- Indicated as absPos. If outside, does not
+-- move anything.
 
 
-cartesian : List a -> List b -> List ( a, b )
-cartesian xs ys =
-    List.concatMap
-        (\x -> List.map (\y -> ( x, y )) ys)
-        xs
-
-
-createDefaultJumpTable : Size -> JumpTable
-createDefaultJumpTable size =
+moveToAbsPos : Location.Pos -> Model -> Model
+moveToAbsPos absPos model =
     let
-        xs =
-            List.range 0 (size.height - 1)
+        maxOffset =
+            Array.length model.sourceCode - model.viewportSize.height
 
-        ys =
-            List.range 0 (size.width - 1)
+        newOffset =
+            min absPos.x maxOffset
 
-        allPairs =
-            cartesian xs ys
-
-        getEntry pos =
-            ( pos, Stay )
+        newCursor =
+            { x = absPos.x - newOffset, y = 0 }
     in
-    Dict.fromList <| List.map getEntry allPairs
+    { model | cursor = newCursor, rowOffset = newOffset }
 
 
-getJump : ( Int, Int ) -> JumpTable -> Pos
-getJump pos table =
-    case Dict.get pos table of
-        Just Stay ->
-            tupleToRecord pos
+get : Location.Pos -> JumpTable -> Location.Pos
+get pos table =
+    let
+        ( cx, cy ) =
+            ( pos.x, pos.y )
+    in
+    case Dict.get ( cx, cy ) table of
+        Just (GoTo ( absx, absy )) ->
+            { x = absx, y = absy }
 
-        Just (GoTo newPos) ->
-            newPos
-
-        _ ->
-            { x = -1, y = -1 }
-
-
-addJump : ( Int, Int ) -> Pos -> JumpTable -> JumpTable
-addJump pos jumpToPos table =
-    Dict.insert pos (GoTo jumpToPos) table
+        Nothing ->
+            pos
 
 
-tupleToRecord ( x, y ) =
-    { x = x, y = y }
+insert : Location.Pos -> Location.Pos -> JumpTable -> JumpTable
+insert pos jumpToPos table =
+    let
+        posTuple =
+            ( pos.x, pos.y )
+
+        jumpToPosTuple =
+            ( jumpToPos.x, jumpToPos.y )
+    in
+    Dict.insert posTuple (GoTo jumpToPosTuple) table

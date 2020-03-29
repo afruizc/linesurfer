@@ -6,7 +6,7 @@ import Hex
 import Html
 import Html.Attributes exposing (style)
 import Location
-import Models exposing (Color, ColorTable, SourceTable, Token)
+import Models exposing (Color, ColorTable, Model, SourceTable, Token)
 import Random
 import Styles exposing (gridCss)
 
@@ -20,22 +20,84 @@ init : SourceTable -> ColorTable
 init source =
     let
         initialElement =
-            ( empty, Random.initialSeed 111 )
+            ( empty, Random.initialSeed 0 )
     in
     Tuple.first <| List.foldr set initialElement (flattenToList source)
 
 
-renderCode : Location.Size -> Location.Pos -> SourceTable -> ColorTable -> Html.Html msg
-renderCode size cursor source table =
+render : Model -> Html.Html msg
+render model =
     Html.div
-        [ style "font" "1.2rem monospace"
+        [ style "display" "flex"
+        , style "font" "1.2rem monospace"
         ]
+        [ renderCodeNumbers model
+        , renderCodeLines model
+        ]
+
+
+renderCodeNumbers : Model -> Html.Html msg
+renderCodeNumbers model =
+    let
+        rowStart =
+            model.rowOffset + 1
+
+        rowEnd =
+            rowStart + model.viewportSize.height - 1
+    in
+    Html.div
+        [ style "flex-basis" "4ch"
+        ]
+        [ Html.div
+            [ style "display" "flex"
+            , style "align-items" "flex-end"
+            , style "flex-direction" "column"
+            , style "margin-left" "-4ch"
+            , style "color" "white"
+            ]
+            (List.range rowStart rowEnd
+                |> List.map String.fromInt
+                |> List.map (\s -> Html.div [] [ Html.text (s ++ "\u{00A0}") ])
+            )
+        ]
+
+
+getCodeToDisplay : Model -> SourceTable
+getCodeToDisplay model =
+    let
+        newTable =
+            model.sourceCode
+                |> Array.toList
+                |> List.drop model.rowOffset
+                |> List.take model.viewportSize.height
+    in
+    Array.fromList newTable
+
+
+renderCodeLines : Model -> Html.Html msg
+renderCodeLines model =
+    let
+        codeToDisplay =
+            getCodeToDisplay model
+    in
+    Html.div []
         (Html.pre
             [ style "position" "absolute"
             ]
-            (List.map (renderToken table) <| flattenToList source)
-            :: [ gridPanel size cursor source ]
+            (List.map (renderToken model.colorTable) <|
+                flattenToList codeToDisplay
+            )
+            :: [ gridPanel model.viewportSize (calculateViewportCoordinate model) ]
         )
+
+
+calculateViewportCoordinate : Model -> Location.Pos
+calculateViewportCoordinate model =
+    let
+        pos =
+            model.cursor
+    in
+    { pos | x = modBy model.viewportSize.height pos.x }
 
 
 get : ColorTable -> String -> Color
@@ -71,10 +133,10 @@ flattenToList xs =
         |> Array.toList
 
 
-gridPanel : Location.Size -> Location.Pos -> SourceTable -> Html.Html msg
-gridPanel size cursor viewer =
+gridPanel : Location.Size -> Location.Pos -> Html.Html msg
+gridPanel size cursor =
     Html.div (gridCss size)
-        (gridDivs size cursor viewer)
+        (gridDivs size cursor)
 
 
 from2Dto1D : Int -> Location.Pos -> Int
@@ -82,8 +144,8 @@ from2Dto1D width { x, y } =
     width * x + y
 
 
-gridDivs : Location.Size -> Location.Pos -> SourceTable -> List (Html.Html msg)
-gridDivs size cursor source =
+gridDivs : Location.Size -> Location.Pos -> List (Html.Html msg)
+gridDivs size cursor =
     let
         cellCount =
             size.width * size.height
@@ -116,7 +178,7 @@ emptyCell =
 
 focusedCell =
     Html.div
-        (style "background-color" "rgba(1, 1, 1, 0.2)"
+        (style "background-color" "rgba(255, 255, 255, 0.3)"
             :: cell
         )
         []
@@ -142,7 +204,7 @@ toHexColor { r, g, b } =
 
 
 randomDarkColorGenerator =
-    randomColorGenerator 3 200
+    randomColorGenerator 80 256
 
 
 randomColorGenerator : Int -> Int -> Random.Generator Color

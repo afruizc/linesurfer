@@ -1,10 +1,9 @@
 module TestCodeViewer exposing (..)
 
 import Array exposing (Array)
-import CodeViewer exposing (CodeViewer, Movement(..), create, moveCursor)
 import Expect
-import JumpTable exposing (createDefaultJumpTable)
-import Location exposing (Pos, Range, Size, SourceCode)
+import JumpTable exposing (initJumpTable)
+import Location exposing (Pos, Range, Size)
 import Test exposing (Test, describe, test)
 
 
@@ -16,7 +15,7 @@ newViewer viewportText viewportSize viewerContent displayRange cursor =
     , displayRange = displayRange
     , cursor = cursor
     , jumpTable =
-        createDefaultJumpTable
+        initJumpTable
             { width = viewportSize.width
             , height = List.length viewerContent
             }

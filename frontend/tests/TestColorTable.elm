@@ -10,43 +10,23 @@ import Test exposing (Test, describe, test)
 oneTokenNoHighlight =
     { token_type = "one"
     , value = "hello"
-    , highlight = -1
     }
 
 
 noHighlightResult =
-    Html.span [ style "color" "#010101" ]
-        [ Html.text "hello" ]
-
-
-oneTokenHighlight =
-    { token_type = "one"
-    , value = "hello"
-    , highlight = 1
-    }
-
-
-highlightResult =
-    Html.span [ style "color" "#010101" ]
-        [ Html.text "h"
-        , Html.span [ style "background-color" "rgba(0, 0, 0, 0.3)" ]
-            [ Html.text "e"
-            ]
-        , Html.text "llo"
+    Html.span
+        [ style "color" "#010101"
+        , style "height" "25px"
         ]
+        [ Html.text "hello" ]
 
 
 all : Test
 all =
     describe "Render token"
-        [ test "no highlight" <|
+        [ test "basic render" <|
             \_ ->
                 oneTokenNoHighlight
                     |> CodeHighlighting.renderTokenWithColor "#010101"
                     |> Expect.equal noHighlightResult
-        , test "basic highlight " <|
-            \_ ->
-                oneTokenHighlight
-                    |> CodeHighlighting.renderTokenWithColor "#010101"
-                    |> Expect.equal highlightResult
         ]

@@ -8,8 +8,9 @@ import Dict
 import Html
 import Http
 import Json.Decode as JsonDecode
+import JumpTable
 import Location
-import Models exposing (ColorTable, SourceTable, Token)
+import Models exposing (ColorTable, Model, SourceTable, Token)
 
 
 type Movement
@@ -19,36 +20,41 @@ type Movement
     | DownOneChar
 
 
+
+--| EndFile
+--| BegFile
+--| PageDown
+--| PageUp
+--| JumpTo
+
+
 type Msg
     = GetTokens (Result Http.Error (List Token))
     | MoveCursor Movement
     | NoOp
 
 
-type alias Model =
-    { table : SourceTable
-    , cursor : Location.Pos
-    , rowOffset : Int
-    , viewportSize : Location.Size
-    , colorTable : ColorTable
+getAbsCursor : Model -> Location.Pos
+getAbsCursor model =
+    { x = model.cursor.x + model.rowOffset
+    , y = model.cursor.y
     }
 
 
 view : Model -> Html.Html Msg
 view model =
-    CodeHighlighting.renderCode
-        model.viewportSize
-        model.cursor
-        (getCodeToDisplay model)
-        model.colorTable
+    CodeHighlighting.render model
 
 
+initialModel : Model
 initialModel =
-    { table = Array.fromList []
+    { sourceCode = Array.fromList []
     , cursor = { x = 0, y = 0 }
     , rowOffset = 0
     , viewportSize = { width = 0, height = 1 }
     , colorTable = Dict.fromList []
+    , jumpTable = JumpTable.initJumpTable
+    , absCursor = { x = 0, y = 0 }
     }
 
 
@@ -56,13 +62,15 @@ createModel : Int -> SourceTable -> Model
 createModel height source =
     let
         maxWidth =
-            80
+            100
     in
     { viewportSize = { width = maxWidth, height = height }
     , cursor = { x = 0, y = 0 }
-    , table = source
+    , sourceCode = source
     , rowOffset = 0
     , colorTable = CodeHighlighting.init source
+    , jumpTable = JumpTable.initJumpTable
+    , absCursor = { x = 0, y = 0 }
     }
 
 
@@ -92,86 +100,97 @@ update msg model =
             ( model, Cmd.none )
 
 
+getNewPos : Movement -> Model -> Location.Pos
+getNewPos mov model =
+    let
+        pos =
+            model.cursor
+    in
+    case mov of
+        RightOneChar ->
+            { pos | y = pos.y + 1 }
+
+        LeftOneChar ->
+            { pos | y = pos.y - 1 }
+
+        UpOneChar ->
+            { pos | x = pos.x - 1 }
+
+        DownOneChar ->
+            { pos | x = pos.x + 1 }
+
+        JumpTo ->
+            JumpTable.get model.jumpTable model.cursor
+
+        --
+        --EndFile ->
+        --    JumpTable.moveToAbsPos lastRowFile model
+        BegFile ->
+            { x = 0, y = 0 }
+
+        PageDown ->
+            { pos | x = pos.x + 10 }
+
+        PageUp ->
+            { pos | x = pos.x - 10 }
+
+        _ ->
+            pos
+
+
 moveCursor : Movement -> Model -> Model
 moveCursor mov model =
     let
-        ( dx, dy ) =
-            case mov of
-                RightOneChar ->
-                    ( 0, 1 )
+        newPos =
+            getNewPos mov model
+    in
+    moveOffset newPos model
 
-                LeftOneChar ->
-                    ( 0, -1 )
 
-                UpOneChar ->
-                    ( -1, 0 )
+clampCursor : Model -> Location.Pos -> Location.Pos
+clampCursor model newPos =
+    let
+        lastRow =
+            Array.length model.sourceCode - 1
+    in
+    { x = clamp 0 lastRow newPos.x
+    , y = clamp 0 model.viewportSize.width newPos.y
+    }
 
-                DownOneChar ->
-                    ( 1, 0 )
 
-        ( x, y ) =
-            ( model.cursor.x, model.cursor.y )
+moveOffset : Location.Pos -> Model -> Model
+moveOffset newCursor model =
+    let
+        diff =
+            newCursor.x - model.cursor.x
 
-        newCursor =
-            { x = x + dx
-            , y = y + dy
-            }
+        displayRangeBeg =
+            model.rowOffset
 
-        height =
-            model.viewportSize.height
+        displayRangeEnd =
+            displayRangeBeg + model.viewportSize.height - 1
 
-        numberOfLines =
-            Array.length model.table
-
-        isFirstRow =
-            x == 0 && model.rowOffset == 0
-
-        isLastRow =
-            x == (height - 1) && (model.rowOffset + height) == numberOfLines
-
-        canMoveRangeUp =
-            newCursor.x < 0 && not isFirstRow
-
-        canMoveRangeDown =
-            newCursor.x >= height && not isLastRow
+        newCursorOutside =
+            newCursor.x < displayRangeBeg || newCursor.x > displayRangeEnd
 
         newOffset =
-            if canMoveRangeUp || canMoveRangeDown then
-                model.rowOffset + dx
+            if newCursorOutside then
+                clamp
+                    0
+                    (Array.length model.sourceCode - model.viewportSize.height)
+                    (model.rowOffset + diff)
 
             else
-                model.rowOffset
-
-        clampedNewCursor =
-            clampPos model.viewportSize newCursor
+                0
     in
     { model
-        | cursor = clampedNewCursor
-        , rowOffset = newOffset
+        | rowOffset = newOffset
+        , cursor = clampCursor model newCursor
     }
-
-
-clampPos : Location.Size -> Location.Pos -> Location.Pos
-clampPos size pos =
-    { x = clamp 0 (size.height - 1) pos.x
-    , y = clamp 0 (size.width - 1) pos.y
-    }
-
-
-getCodeToDisplay : Model -> SourceTable
-getCodeToDisplay model =
-    let
-        newTable =
-            model.table
-                |> Array.toList
-                |> List.drop model.rowOffset
-                |> List.take model.viewportSize.height
-    in
-    Array.fromList newTable
 
 
 defaultHeight =
-    30
+    10
 
 
 getSourceCode : Result Http.Error (List Token) -> Model -> Model
@@ -184,6 +203,17 @@ getSourceCode result _ =
             createModel defaultHeight <| Array.fromList []
 
 
+trimNewLines : ( Token, List Token ) -> Array Token
+trimNewLines ( token, list ) =
+    if token.value == "\n" then
+        Array.fromList (List.concat [ list, [ token ] ])
+
+    else
+        token
+            :: List.append list [ { token_type = "Text", value = "\n" } ]
+            |> Array.fromList
+
+
 splitByNewline : List Token -> Array (Array Token)
 splitByNewline tokens =
     let
@@ -194,7 +224,7 @@ splitByNewline tokens =
             ArrayExtra.groupWhile test tokens
     in
     Array.fromList
-        (List.map (\( t, list ) -> Array.fromList (t :: list)) listGroups)
+        (List.map trimNewLines listGroups)
 
 
 tokenListDecoder : JsonDecode.Decoder (List Token)
@@ -238,7 +268,20 @@ keyToAction string =
         Just ( 'l', "" ) ->
             MoveCursor RightOneChar
 
-        --Just ( 'B', "" ) ->
-        --    JumpCursor
+        Just ( 'g', "" ) ->
+            MoveCursor BegFile
+
+        Just ( 'G', "" ) ->
+            MoveCursor EndFile
+
+        Just ( 'd', "" ) ->
+            MoveCursor PageDown
+
+        Just ( 'u', "" ) ->
+            MoveCursor PageUp
+
+        Just ( 'B', "" ) ->
+            MoveCursor JumpTo
+
         _ ->
             NoOp
