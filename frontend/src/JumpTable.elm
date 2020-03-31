@@ -1,35 +1,13 @@
 module JumpTable exposing (..)
 
-import Array
 import Dict exposing (Dict)
 import Location
-import Models exposing (JumpTable, JumpTo(..), Model)
+import Models exposing (CodeViewer, JumpTable, JumpTo(..))
 
 
 initJumpTable : List ( ( Int, Int ), JumpTo ) -> JumpTable
 initJumpTable initList =
     Dict.fromList initList
-
-
-
--- Moves the cursor to the absolute position
--- Indicated as absPos. If outside, does not
--- move anything.
-
-
-moveToAbsPos : Location.Pos -> Model -> Model
-moveToAbsPos absPos model =
-    let
-        maxOffset =
-            Array.length model.sourceCode - model.viewportSize.height
-
-        newOffset =
-            min absPos.x maxOffset
-
-        newCursor =
-            { x = absPos.x - newOffset, y = 0 }
-    in
-    { model | cursor = newCursor, rowOffset = newOffset }
 
 
 get : Location.Pos -> JumpTable -> Location.Pos

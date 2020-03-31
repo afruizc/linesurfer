@@ -1,8 +1,8 @@
 module Main exposing (..)
 
 import Browser
-import Models exposing (Model)
-import SourceProgram
+import CodeViewer
+import Models exposing (CodeViewer)
 
 
 type alias Url =
@@ -13,11 +13,11 @@ type alias Url =
 ---- PROGRAM ----
 
 
-main : Program () Model SourceProgram.Msg
+main : Program () CodeViewer CodeViewer.Msg
 main =
     Browser.element
-        { view = SourceProgram.view
-        , init = \_ -> SourceProgram.init
-        , update = SourceProgram.update
-        , subscriptions = SourceProgram.subscriptions
+        { view = CodeViewer.view
+        , init = \_ -> CodeViewer.init
+        , update = CodeViewer.update
+        , subscriptions = CodeViewer.subscriptions
         }

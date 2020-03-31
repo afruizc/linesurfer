@@ -11,7 +11,7 @@ type alias Token =
     }
 
 
-type alias SourceTable =
+type alias SourceCode =
     Array (Array Token)
 
 
@@ -26,14 +26,19 @@ type alias ColorTable =
     Dict String Color
 
 
-type alias Model =
-    { sourceCode : SourceTable
-    , absCursor : Location.Pos -- This is a computed property
-    , cursor : Location.Pos
-    , rowOffset : Int
-    , viewportSize : Location.Size
+type alias CodeViewer =
+    { sourceCode : SourceCode
+    , viewport : Viewport
     , colorTable : ColorTable
     , jumpTable : JumpTable
+    }
+
+
+type alias Viewport =
+    { size : Location.Size
+    , cursor : Location.Pos
+    , rowOffset : Int
+    , totalHeight : Int
     }
 
 
@@ -43,3 +48,10 @@ type JumpTo
 
 type alias JumpTable =
     Dict ( Int, Int ) JumpTo
+
+
+type Movement
+    = RightOneChar
+    | LeftOneChar
+    | UpOneChar
+    | DownOneChar

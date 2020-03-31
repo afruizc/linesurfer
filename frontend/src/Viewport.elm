@@ -1,0 +1,114 @@
+module Viewport exposing (..)
+
+import Location
+import Models exposing (Movement(..), Viewport)
+
+
+empty =
+    { size = { width = 1, height = 1 }
+    , cursor = { x = 0, y = 0 }
+    , rowOffset = 0
+    , totalHeight = 0
+    }
+
+
+type alias CreationError =
+    String
+
+
+createAtOrigin : Location.Size -> Int -> Result CreationError Viewport
+createAtOrigin size totalHeight =
+    case ( size.width, size.height ) of
+        ( 0, 0 ) ->
+            Err "width and height must be at least 1"
+
+        ( _, _ ) ->
+            Ok (new size { x = 0, y = 0 } 0 totalHeight)
+
+
+new : Location.Size -> Location.Pos -> Int -> Int -> Viewport
+new size cursor rowOffset totalHeight =
+    { size = size
+    , cursor = cursor
+    , rowOffset = rowOffset
+    , totalHeight = totalHeight
+    }
+
+
+getAbsPos : Movement -> Viewport -> Location.Pos
+getAbsPos mov model =
+    let
+        pos =
+            model.cursor
+    in
+    case mov of
+        RightOneChar ->
+            { pos | y = pos.y + 1 }
+
+        LeftOneChar ->
+            { pos | y = pos.y - 1 }
+
+        UpOneChar ->
+            { pos | x = model.rowOffset + pos.x - 1 }
+
+        DownOneChar ->
+            { pos | x = model.rowOffset + pos.x + 1 }
+
+
+move : Movement -> Viewport -> Viewport
+move mov viewer =
+    let
+        newCursorAbsPos =
+            getAbsPos mov viewer
+    in
+    moveCursor newCursorAbsPos viewer
+
+
+moveCursor : Location.Pos -> Viewport -> Viewport
+moveCursor cursorAbsPos viewport =
+    let
+        lastRow =
+            viewport.totalHeight - 1
+
+        cursorInFile =
+            clampCursor
+                ( lastRow, viewport.size.width )
+                cursorAbsPos
+
+        curAbsBegin =
+            viewport.cursor.x + viewport.rowOffset
+
+        curAbsEnd =
+            curAbsBegin + viewport.size.height
+
+        diff =
+            if
+                cursorInFile.x
+                    < curAbsBegin
+                    || cursorInFile.x
+                    >= curAbsEnd
+            then
+                cursorInFile.x - viewport.rowOffset
+
+            else
+                0
+
+        maxRowOffset =
+            viewport.totalHeight - viewport.size.height
+
+        cursorInView =
+            { cursorInFile
+                | x = modBy viewport.size.height cursorInFile.x
+            }
+    in
+    { viewport
+        | cursor = cursorInView
+        , rowOffset = clamp 0 maxRowOffset diff
+    }
+
+
+clampCursor : ( Int, Int ) -> Location.Pos -> Location.Pos
+clampCursor ( lastRow, lastCol ) newPos =
+    { x = clamp 0 lastRow newPos.x
+    , y = clamp 0 lastCol newPos.y
+    }

@@ -6,7 +6,7 @@ import Hex
 import Html
 import Html.Attributes exposing (style)
 import Location
-import Models exposing (Color, ColorTable, Model, SourceTable, Token)
+import Models exposing (CodeViewer, Color, ColorTable, SourceCode, Token)
 import Random
 import Styles exposing (gridCss)
 
@@ -16,7 +16,7 @@ empty =
     Dict.fromList []
 
 
-init : SourceTable -> ColorTable
+init : SourceCode -> ColorTable
 init source =
     let
         initialElement =
@@ -25,7 +25,7 @@ init source =
     Tuple.first <| List.foldr set initialElement (flattenToList source)
 
 
-render : Model -> Html.Html msg
+render : CodeViewer -> Html.Html msg
 render model =
     Html.div
         [ style "display" "flex"
@@ -36,14 +36,14 @@ render model =
         ]
 
 
-renderCodeNumbers : Model -> Html.Html msg
-renderCodeNumbers model =
+renderCodeNumbers : CodeViewer -> Html.Html msg
+renderCodeNumbers viewer =
     let
         rowStart =
-            model.rowOffset + 1
+            viewer.viewport.rowOffset + 1
 
         rowEnd =
-            rowStart + model.viewportSize.height - 1
+            rowStart + viewer.viewport.size.height - 1
     in
     Html.div
         [ style "flex-basis" "4ch"
@@ -62,19 +62,19 @@ renderCodeNumbers model =
         ]
 
 
-getCodeToDisplay : Model -> SourceTable
-getCodeToDisplay model =
+getCodeToDisplay : CodeViewer -> SourceCode
+getCodeToDisplay viewer =
     let
         newTable =
-            model.sourceCode
+            viewer.sourceCode
                 |> Array.toList
-                |> List.drop model.rowOffset
-                |> List.take model.viewportSize.height
+                |> List.drop viewer.viewport.rowOffset
+                |> List.take viewer.viewport.size.height
     in
     Array.fromList newTable
 
 
-renderCodeLines : Model -> Html.Html msg
+renderCodeLines : CodeViewer -> Html.Html msg
 renderCodeLines model =
     let
         codeToDisplay =
@@ -87,17 +87,17 @@ renderCodeLines model =
             (List.map (renderToken model.colorTable) <|
                 flattenToList codeToDisplay
             )
-            :: [ gridPanel model.viewportSize (calculateViewportCoordinate model) ]
+            :: [ gridPanel model.viewport.size (calculateViewportCoordinate model) ]
         )
 
 
-calculateViewportCoordinate : Model -> Location.Pos
+calculateViewportCoordinate : CodeViewer -> Location.Pos
 calculateViewportCoordinate model =
     let
         pos =
-            model.cursor
+            model.viewport.cursor
     in
-    { pos | x = modBy model.viewportSize.height pos.x }
+    { pos | x = modBy model.viewport.size.height pos.x }
 
 
 get : ColorTable -> String -> Color
