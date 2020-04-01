@@ -106,7 +106,8 @@ moveCursor cursorAbsPos viewport =
                 0
 
         maxRowOffset =
-            viewport.totalHeight - viewport.size.height
+            (viewport.totalHeight - viewport.size.height)
+                |> max 0
 
         newOffset =
             clamp 0 maxRowOffset (viewport.rowOffset + offsetDiff)

@@ -87,6 +87,13 @@ testCases =
             newViewportAtOrigin ( 1, 3 ) 4
                 |> changeViewport 1 { x = 2, y = 0 }
       }
+    , { msg = "move down total height less than height"
+      , input = newViewportAtOrigin ( 1, 3 ) 2
+      , move = DownOneChar
+      , expected =
+            newViewportAtOrigin ( 1, 3 ) 2
+                |> changeViewport 0 { x = 1, y = 0 }
+      }
     ]
 
 

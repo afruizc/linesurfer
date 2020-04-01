@@ -4,23 +4,22 @@ import Array exposing (Array)
 import ArrayExtra
 import CodeHighlighting
 import Config
+import Dict exposing (Dict)
 import Http
 import Json.Decode as JsonDecode
 import JumpTable
-import Models exposing (CodeViewer, SourceCode, Token)
+import Models exposing (CodeViewer, Model, SourceCode, Token, ViewersTable)
 import Viewport
 
 
-getSourceCode : Result Http.Error (List Token) -> CodeViewer
+getSourceCode : Result Http.Error (List SourceCode) -> Model
 getSourceCode result =
     case result of
         Ok data ->
-            splitByNewline data
-                |> createModel
+            createModel data
 
         Err _ ->
-            Array.fromList []
-                |> createModel
+            createModel []
 
 
 splitByNewline : List Token -> Array (Array Token)
@@ -47,14 +46,14 @@ trimNewLines ( token, list ) =
             |> Array.fromList
 
 
-createModel : SourceCode -> CodeViewer
-createModel source =
+createViewer : SourceCode -> CodeViewer
+createViewer source =
     let
         size =
             { width = Config.defaultWidth, height = Config.defaultHeight }
 
         totalHeight =
-            Array.length source
+            Array.length source.content
 
         viewport =
             Viewport.createAtOrigin size totalHeight
@@ -66,9 +65,34 @@ createModel source =
     }
 
 
-tokenListDecoder : JsonDecode.Decoder (List Token)
+createModel : List SourceCode -> Model
+createModel sources =
+    let
+        insert : SourceCode -> ViewersTable -> ViewersTable
+        insert source dict =
+            Dict.insert source.path (createViewer source) dict
+
+        allViewports =
+            List.foldr insert Dict.empty sources
+    in
+    { currentViewer =
+        List.head sources
+            |> Maybe.withDefault { path = "", content = Array.fromList [] }
+            |> createViewer
+    , allViewers = allViewports
+    }
+
+
+tokenListDecoder : JsonDecode.Decoder (List SourceCode)
 tokenListDecoder =
-    JsonDecode.field "data" <| JsonDecode.list tokenDecoder
+    JsonDecode.field "data" <| JsonDecode.list sourceCodeDecoder
+
+
+sourceCodeDecoder : JsonDecode.Decoder SourceCode
+sourceCodeDecoder =
+    JsonDecode.map2 SourceCode
+        (JsonDecode.field "path" JsonDecode.string)
+        (JsonDecode.map splitByNewline (JsonDecode.field "content" <| JsonDecode.list tokenDecoder))
 
 
 tokenDecoder : JsonDecode.Decoder Token

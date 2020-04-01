@@ -22,7 +22,7 @@ init source =
         initialElement =
             ( empty, Random.initialSeed 0 )
     in
-    Tuple.first <| List.foldr set initialElement (flattenToList source)
+    Tuple.first <| List.foldr set initialElement (flattenToList source.content)
 
 
 render : CodeViewer -> Html.Html msg
@@ -31,19 +31,20 @@ render model =
         [ style "display" "flex"
         , style "font" "1.2rem monospace"
         ]
-        [ renderCodeNumbers model
-        , renderCodeLines model
+        [ renderLineNumbers model
+        , renderCode model
         ]
 
 
-renderCodeNumbers : CodeViewer -> Html.Html msg
-renderCodeNumbers viewer =
+renderLineNumbers : CodeViewer -> Html.Html msg
+renderLineNumbers viewer =
     let
         rowStart =
             viewer.viewport.rowOffset + 1
 
         rowEnd =
-            rowStart + viewer.viewport.size.height - 1
+            min viewer.viewport.totalHeight
+                (rowStart + viewer.viewport.size.height - 1)
     in
     Html.div
         [ style "flex-basis" "4ch"
@@ -66,16 +67,14 @@ getCodeToDisplay : CodeViewer -> SourceCode
 getCodeToDisplay viewer =
     let
         newTable =
-            viewer.sourceCode
-                |> Array.toList
-                |> List.drop viewer.viewport.rowOffset
-                |> List.take viewer.viewport.size.height
+            viewer.sourceCode.content
+                |> Array.slice viewer.viewport.rowOffset viewer.viewport.size.height
     in
-    Array.fromList newTable
+    { path = "", content = newTable }
 
 
-renderCodeLines : CodeViewer -> Html.Html msg
-renderCodeLines model =
+renderCode : CodeViewer -> Html.Html msg
+renderCode model =
     let
         codeToDisplay =
             getCodeToDisplay model
@@ -85,7 +84,7 @@ renderCodeLines model =
             [ style "position" "absolute"
             ]
             (List.map (renderToken model.colorTable) <|
-                flattenToList codeToDisplay
+                flattenToList codeToDisplay.content
             )
             :: [ gridPanel model.viewport.size (calculateViewportCoordinate model) ]
         )

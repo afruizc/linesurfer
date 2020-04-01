@@ -12,7 +12,9 @@ type alias Token =
 
 
 type alias SourceCode =
-    Array (Array Token)
+    { path : String
+    , content : Array (Array Token)
+    }
 
 
 type alias Color =
@@ -24,6 +26,16 @@ type alias Color =
 
 type alias ColorTable =
     Dict String Color
+
+
+type alias ViewersTable =
+    Dict String CodeViewer
+
+
+type alias Model =
+    { currentViewer : CodeViewer
+    , allViewers : ViewersTable
+    }
 
 
 type alias CodeViewer =

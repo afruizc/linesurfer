@@ -9,27 +9,39 @@ import Html
 import Http
 import Json.Decode as JsonDecode
 import JumpTable
-import Models exposing (CodeViewer, ColorTable, Movement(..), SourceCode, Token)
+import Models exposing (CodeViewer, ColorTable, Model, Movement(..), SourceCode, Token)
 import Viewport
 
 
 type Msg
-    = GetTokens (Result Http.Error (List Token))
+    = GetTokens (Result Http.Error (List SourceCode))
     | MoveCursor Movement
     | NoOp
 
 
-view : CodeViewer -> Html.Html Msg
+view : Model -> Html.Html Msg
 view model =
-    CodeHighlighting.render model
+    CodeHighlighting.render model.currentViewer
 
 
-initialModel : CodeViewer
-initialModel =
-    { sourceCode = Array.fromList []
+emptySourceCode : SourceCode
+emptySourceCode =
+    { path = "", content = Array.fromList [] }
+
+
+emptyViewer : CodeViewer
+emptyViewer =
+    { sourceCode = emptySourceCode
     , viewport = Viewport.empty
     , colorTable = Dict.fromList []
     , jumpTable = JumpTable.initJumpTable []
+    }
+
+
+emptyModel : Model
+emptyModel =
+    { allViewers = Dict.fromList []
+    , currentViewer = emptyViewer
     }
 
 
@@ -41,19 +53,23 @@ fetchSourceCode url =
         }
 
 
-init : ( CodeViewer, Cmd Msg )
+init : ( Model, Cmd Msg )
 init =
-    ( initialModel, fetchSourceCode "http://localhost:8080" )
+    ( emptyModel, fetchSourceCode "http://localhost:8080" )
 
 
-update : Msg -> CodeViewer -> ( CodeViewer, Cmd Msg )
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
+    let
+        newModel dir =
+            { model | currentViewer = move dir model.currentViewer }
+    in
     case msg of
         GetTokens result ->
             ( FetchCode.getSourceCode result, Cmd.none )
 
         MoveCursor dir ->
-            ( move dir model, Cmd.none )
+            ( newModel dir, Cmd.none )
 
         NoOp ->
             ( model, Cmd.none )
@@ -87,7 +103,7 @@ move dir viewer =
 --    pos
 
 
-subscriptions : CodeViewer -> Sub Msg
+subscriptions : Model -> Sub Msg
 subscriptions _ =
     Browser.Events.onKeyDown keyDecoder
 
