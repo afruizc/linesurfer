@@ -55,3 +55,11 @@ type Movement
     | LeftOneChar
     | UpOneChar
     | DownOneChar
+    | PageDown
+    | PageUp
+    | EndFile
+    | BegFile
+
+
+
+--| JumpTo

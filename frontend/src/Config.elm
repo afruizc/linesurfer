@@ -2,7 +2,7 @@ module Config exposing (..)
 
 
 defaultHeight =
-    10
+    30
 
 
 defaultWidth =

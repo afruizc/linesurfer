@@ -16,6 +16,12 @@ changeViewport offset cursor viewer =
     }
 
 
+newViewportAtOrigin : ( Int, Int ) -> Int -> Viewport
+newViewportAtOrigin ( w, h ) totalH =
+    Viewport.createAtOrigin { width = w, height = h } totalH
+        |> Result.withDefault Viewport.empty
+
+
 type alias MoveTestCase =
     { msg : String
     , input : Viewport
@@ -24,61 +30,62 @@ type alias MoveTestCase =
     }
 
 
-newAtOrigin : ( Int, Int ) -> Int -> Viewport
-newAtOrigin ( w, h ) totalH =
-    Viewport.createAtOrigin { width = w, height = h } totalH
-        |> Result.withDefault Viewport.empty
-
-
 testCases : List MoveTestCase
 testCases =
     [ { msg = "move right on one line two chars viewer"
-      , input = newAtOrigin ( 2, 1 ) 2
+      , input = newViewportAtOrigin ( 2, 1 ) 2
       , move = RightOneChar
       , expected =
-            newAtOrigin ( 2, 1 ) 2
+            newViewportAtOrigin ( 2, 1 ) 2
                 |> changeViewport 0 { x = 0, y = 1 }
       }
     , { msg = "move down on one line show next line"
-      , input = newAtOrigin ( 1, 1 ) 2
+      , input = newViewportAtOrigin ( 1, 1 ) 2
       , move = DownOneChar
       , expected =
-            newAtOrigin ( 1, 1 ) 2
+            newViewportAtOrigin ( 1, 1 ) 2
                 |> changeViewport 1 { x = 0, y = 0 }
       }
     , { msg = "move up one line on two line"
-      , input = newAtOrigin ( 1, 1 ) 2 |> changeViewport 1 { x = 0, y = 0 }
+      , input = newViewportAtOrigin ( 1, 1 ) 2 |> changeViewport 1 { x = 0, y = 0 }
       , move = UpOneChar
       , expected =
-            newAtOrigin ( 1, 1 ) 2
+            newViewportAtOrigin ( 1, 1 ) 2
       }
     , { msg = "move down one line on three line"
-      , input = newAtOrigin ( 1, 2 ) 2
+      , input = newViewportAtOrigin ( 1, 2 ) 2
       , move = DownOneChar
       , expected =
-            newAtOrigin ( 1, 2 ) 2
+            newViewportAtOrigin ( 1, 2 ) 2
                 |> changeViewport 0 { x = 1, y = 0 }
       }
     , { msg = "move on three lines down dont change offset"
-      , input = newAtOrigin ( 1, 2 ) 3
+      , input = newViewportAtOrigin ( 1, 2 ) 3
       , move = DownOneChar
       , expected =
-            newAtOrigin ( 1, 2 ) 3
+            newViewportAtOrigin ( 1, 2 ) 3
                 |> changeViewport 0 { x = 1, y = 0 }
       }
     , { msg = "move on three lines down change offset"
-      , input = newAtOrigin ( 1, 2 ) 3 |> changeViewport 0 { x = 1, y = 0 }
+      , input = newViewportAtOrigin ( 1, 2 ) 3 |> changeViewport 0 { x = 1, y = 0 }
       , move = DownOneChar
       , expected =
-            newAtOrigin ( 1, 2 ) 3
+            newViewportAtOrigin ( 1, 2 ) 3
                 |> changeViewport 1 { x = 1, y = 0 }
       }
     , { msg = "move down on three lines down "
-      , input = newAtOrigin ( 1, 2 ) 3 |> changeViewport 1 { x = 1, y = 0 }
+      , input = newViewportAtOrigin ( 1, 2 ) 3 |> changeViewport 1 { x = 1, y = 0 }
       , move = DownOneChar
       , expected =
-            newAtOrigin ( 1, 2 ) 3
+            newViewportAtOrigin ( 1, 2 ) 3
                 |> changeViewport 1 { x = 1, y = 0 }
+      }
+    , { msg = "move down on three line viewer of four lines"
+      , input = newViewportAtOrigin ( 1, 3 ) 4 |> changeViewport 0 { x = 2, y = 0 }
+      , move = DownOneChar
+      , expected =
+            newViewportAtOrigin ( 1, 3 ) 4
+                |> changeViewport 1 { x = 2, y = 0 }
       }
     ]
 

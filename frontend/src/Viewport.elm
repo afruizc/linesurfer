@@ -35,8 +35,8 @@ new size cursor rowOffset totalHeight =
     }
 
 
-getAbsPos : Movement -> Viewport -> Location.Pos
-getAbsPos mov model =
+getAbsoluteNewCursor : Movement -> Viewport -> Location.Pos
+getAbsoluteNewCursor mov model =
     let
         pos =
             model.cursor
@@ -54,12 +54,24 @@ getAbsPos mov model =
         DownOneChar ->
             { pos | x = model.rowOffset + pos.x + 1 }
 
+        PageUp ->
+            { pos | x = model.rowOffset + pos.x - 10 }
+
+        PageDown ->
+            { pos | x = model.rowOffset + pos.x + 10 }
+
+        EndFile ->
+            { pos | x = model.totalHeight - 1 }
+
+        BegFile ->
+            { pos | x = 0 }
+
 
 move : Movement -> Viewport -> Viewport
 move mov viewer =
     let
         newCursorAbsPos =
-            getAbsPos mov viewer
+            getAbsoluteNewCursor mov viewer
     in
     moveCursor newCursorAbsPos viewer
 
@@ -72,7 +84,7 @@ moveCursor cursorAbsPos viewport =
 
         cursorInFile =
             clampCursor
-                ( lastRow, viewport.size.width )
+                ( lastRow, viewport.size.width - 1 )
                 cursorAbsPos
 
         curAbsBegin =
@@ -101,7 +113,7 @@ moveCursor cursorAbsPos viewport =
 
         cursorInView =
             { cursorInFile
-                | x = modBy viewport.size.height (cursorInFile.x + newOffset)
+                | x = modBy viewport.size.height (cursorInFile.x - newOffset)
             }
     in
     { viewport

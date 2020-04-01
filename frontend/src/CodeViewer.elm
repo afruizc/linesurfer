@@ -13,14 +13,6 @@ import Models exposing (CodeViewer, ColorTable, Movement(..), SourceCode, Token)
 import Viewport
 
 
-
---| EndFile
---| BegFile
---| PageDown
---| PageUp
---| JumpTo
-
-
 type Msg
     = GetTokens (Result Http.Error (List Token))
     | MoveCursor Movement
@@ -124,18 +116,18 @@ keyToAction string =
         Just ( 'l', "" ) ->
             MoveCursor RightOneChar
 
-        --Just ( 'g', "" ) ->
-        --    MoveCursor BegFile
-        --
-        --Just ( 'G', "" ) ->
-        --    MoveCursor EndFile
-        --
-        --Just ( 'd', "" ) ->
-        --    MoveCursor PageDown
-        --
-        --Just ( 'u', "" ) ->
-        --    MoveCursor PageUp
-        --
+        Just ( 'g', "" ) ->
+            MoveCursor BegFile
+
+        Just ( 'G', "" ) ->
+            MoveCursor EndFile
+
+        Just ( 'd', "" ) ->
+            MoveCursor PageDown
+
+        Just ( 'u', "" ) ->
+            MoveCursor PageUp
+
         --Just ( 'B', "" ) ->
         --    MoveCursor JumpTo
         _ ->
