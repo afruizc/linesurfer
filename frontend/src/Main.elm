@@ -2,7 +2,7 @@ module Main exposing (..)
 
 import Browser
 import CodeViewer
-import Models exposing (CodeViewer, Model)
+import Models exposing (CodeViewer, Model, Msg)
 
 
 type alias Url =
@@ -13,7 +13,7 @@ type alias Url =
 ---- PROGRAM ----
 
 
-main : Program () Model CodeViewer.Msg
+main : Program () Model Msg
 main =
     Browser.element
         { view = CodeViewer.view

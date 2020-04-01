@@ -8,7 +8,7 @@ Surf on the lines
 - ~~Take files from HTTP.~~
 - ~~Display one big file. (adapt viewport).~~
 - ~~Color a file.~~
-- Display multiple files.
+- ~~Display multiple files.~~
 - Jump across files.
 
 # Next release

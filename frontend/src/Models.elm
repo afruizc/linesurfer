@@ -2,6 +2,7 @@ module Models exposing (..)
 
 import Array exposing (Array)
 import Dict exposing (Dict)
+import Http
 import Location
 
 
@@ -35,13 +36,13 @@ type alias ViewersTable =
 type alias Model =
     { currentViewer : CodeViewer
     , allViewers : ViewersTable
+    , colorTable : ColorTable
     }
 
 
 type alias CodeViewer =
     { sourceCode : SourceCode
     , viewport : Viewport
-    , colorTable : ColorTable
     , jumpTable : JumpTable
     }
 
@@ -62,6 +63,10 @@ type alias JumpTable =
     Dict ( Int, Int ) JumpTo
 
 
+type alias Path =
+    String
+
+
 type Movement
     = RightOneChar
     | LeftOneChar
@@ -71,6 +76,13 @@ type Movement
     | PageUp
     | EndFile
     | BegFile
+
+
+type Msg
+    = GetTokens (Result Http.Error (List SourceCode))
+    | MoveCursor Movement
+    | ChangeTo Path
+    | NoOp
 
 
 

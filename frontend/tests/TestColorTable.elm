@@ -1,9 +1,9 @@
 module TestColorTable exposing (..)
 
-import CodeHighlighting
 import Expect
 import Html
 import Html.Attributes exposing (style)
+import HtmlRendering
 import Test exposing (Test, describe, test)
 
 
@@ -27,6 +27,6 @@ all =
         [ test "basic render" <|
             \_ ->
                 oneTokenNoHighlight
-                    |> CodeHighlighting.renderTokenWithColor "#010101"
+                    |> HtmlRendering.renderTokenWithColor "#010101"
                     |> Expect.equal noHighlightResult
         ]

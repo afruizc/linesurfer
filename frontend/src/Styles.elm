@@ -20,9 +20,13 @@ gridCss size =
     ]
 
 
-oneLineGrid : Int -> Float -> List (Html.Attribute msg)
-oneLineGrid numberOfRows rowHeight =
-    [ style "display" "grid"
-    , style "grid-template-columns" "1"
-    , style "grid-template-rows" (repeat numberOfRows rowHeight "px")
+select : List (Html.Attribute msg)
+select =
+    [ style "background-color" "rgba(49, 81, 104)"
+    , style "color" "lightgray"
+    , style "padding" ".5rem"
+    , style "margin" ".5rem 0"
+    , style "font" "1.1rem monospace"
+    , style "min-width" "90%"
+    , style "border" "1px solid gray"
     ]

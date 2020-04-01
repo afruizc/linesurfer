@@ -1,39 +1,27 @@
 module CodeViewer exposing (..)
 
-import Array exposing (Array)
 import Browser.Events
-import CodeHighlighting
 import Dict
 import FetchCode
 import Html
+import HtmlRendering
 import Http
 import Json.Decode as JsonDecode
 import JumpTable
-import Models exposing (CodeViewer, ColorTable, Model, Movement(..), SourceCode, Token)
+import Models exposing (CodeViewer, ColorTable, Model, Movement(..), Msg(..), SourceCode, Token)
+import SourceCode exposing (emptySourceCode)
 import Viewport
-
-
-type Msg
-    = GetTokens (Result Http.Error (List SourceCode))
-    | MoveCursor Movement
-    | NoOp
 
 
 view : Model -> Html.Html Msg
 view model =
-    CodeHighlighting.render model.currentViewer
-
-
-emptySourceCode : SourceCode
-emptySourceCode =
-    { path = "", content = Array.fromList [] }
+    HtmlRendering.render model
 
 
 emptyViewer : CodeViewer
 emptyViewer =
     { sourceCode = emptySourceCode
     , viewport = Viewport.empty
-    , colorTable = Dict.fromList []
     , jumpTable = JumpTable.initJumpTable []
     }
 
@@ -42,6 +30,7 @@ emptyModel : Model
 emptyModel =
     { allViewers = Dict.fromList []
     , currentViewer = emptyViewer
+    , colorTable = Dict.fromList []
     }
 
 
@@ -71,8 +60,21 @@ update msg model =
         MoveCursor dir ->
             ( newModel dir, Cmd.none )
 
+        ChangeTo path ->
+            ( changeToViewer path model, Cmd.none )
+
         NoOp ->
             ( model, Cmd.none )
+
+
+changeToViewer : String -> Model -> Model
+changeToViewer path model =
+    let
+        newViewer =
+            Dict.get path model.allViewers
+                |> Maybe.withDefault emptyViewer
+    in
+    { model | currentViewer = newViewer }
 
 
 move : Movement -> CodeViewer -> CodeViewer
@@ -82,25 +84,6 @@ move dir viewer =
             Viewport.move dir viewer.viewport
     in
     { viewer | viewport = newViewport }
-
-
-
---JumpTo ->
---    JumpTable.get model.jumpTable model.cursor
---
-----
-----EndFile ->
-----    JumpTable.moveToAbsPos lastRowFile model
---BegFile ->
---    { x = 0, y = 0 }
---
---PageDown ->
---    { pos | x = pos.x + 10 }
---
---PageUp ->
---    { pos | x = pos.x - 10 }
---_ ->
---    pos
 
 
 subscriptions : Model -> Sub Msg

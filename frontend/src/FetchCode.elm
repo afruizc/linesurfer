@@ -2,9 +2,9 @@ module FetchCode exposing (..)
 
 import Array exposing (Array)
 import ArrayExtra
-import CodeHighlighting
 import Config
 import Dict exposing (Dict)
+import HtmlRendering
 import Http
 import Json.Decode as JsonDecode
 import JumpTable
@@ -60,7 +60,6 @@ createViewer source =
     in
     { sourceCode = source
     , viewport = Result.withDefault Viewport.empty viewport
-    , colorTable = CodeHighlighting.init source
     , jumpTable = JumpTable.initJumpTable []
     }
 
@@ -80,6 +79,7 @@ createModel sources =
             |> Maybe.withDefault { path = "", content = Array.fromList [] }
             |> createViewer
     , allViewers = allViewports
+    , colorTable = HtmlRendering.init sources
     }
 
 

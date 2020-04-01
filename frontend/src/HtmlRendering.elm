@@ -1,13 +1,15 @@
-module CodeHighlighting exposing (..)
+module HtmlRendering exposing (..)
 
 import Array exposing (Array)
 import Dict exposing (Dict)
 import Hex
 import Html
 import Html.Attributes exposing (style)
+import HtmlElements
 import Location
-import Models exposing (CodeViewer, Color, ColorTable, SourceCode, Token)
+import Models exposing (CodeViewer, Color, ColorTable, Model, Msg(..), SourceCode, Token)
 import Random
+import SourceCode
 import Styles exposing (gridCss)
 
 
@@ -16,23 +18,37 @@ empty =
     Dict.fromList []
 
 
-init : SourceCode -> ColorTable
+init : List SourceCode -> ColorTable
 init source =
     let
         initialElement =
             ( empty, Random.initialSeed 0 )
     in
-    Tuple.first <| List.foldr set initialElement (flattenToList source.content)
+    Tuple.first <| List.foldr set initialElement (flattenSourceCodes source)
 
 
-render : CodeViewer -> Html.Html msg
-render model =
+renderViewer : ColorTable -> CodeViewer -> Html.Html msg
+renderViewer table viewer =
     Html.div
         [ style "display" "flex"
         , style "font" "1.2rem monospace"
         ]
-        [ renderLineNumbers model
-        , renderCode model
+        [ renderLineNumbers viewer
+        , renderCode table viewer
+        ]
+
+
+getAllFiles : Model -> List String
+getAllFiles model =
+    Dict.toList model.allViewers
+        |> List.map Tuple.first
+
+
+render : Model -> Html.Html Msg
+render model =
+    Html.div []
+        [ HtmlElements.renderSelect ChangeTo (getAllFiles model)
+        , renderViewer model.colorTable model.currentViewer
         ]
 
 
@@ -63,40 +79,25 @@ renderLineNumbers viewer =
         ]
 
 
-getCodeToDisplay : CodeViewer -> SourceCode
-getCodeToDisplay viewer =
-    let
-        newTable =
-            viewer.sourceCode.content
-                |> Array.slice viewer.viewport.rowOffset viewer.viewport.size.height
-    in
-    { path = "", content = newTable }
-
-
-renderCode : CodeViewer -> Html.Html msg
-renderCode model =
+renderCode : ColorTable -> CodeViewer -> Html.Html msg
+renderCode color viewer =
     let
         codeToDisplay =
-            getCodeToDisplay model
+            SourceCode.getCodeToDisplay viewer
+
+        len =
+            Array.length codeToDisplay.content
+                |> Debug.log "length"
     in
     Html.div []
         (Html.pre
             [ style "position" "absolute"
             ]
-            (List.map (renderToken model.colorTable) <|
-                flattenToList codeToDisplay.content
+            (List.map (renderToken color) <|
+                flattenSourceCode codeToDisplay.content
             )
-            :: [ gridPanel model.viewport.size (calculateViewportCoordinate model) ]
+            :: [ gridPanel viewer.viewport.size viewer.viewport.cursor ]
         )
-
-
-calculateViewportCoordinate : CodeViewer -> Location.Pos
-calculateViewportCoordinate model =
-    let
-        pos =
-            model.viewport.cursor
-    in
-    { pos | x = modBy model.viewport.size.height pos.x }
 
 
 get : ColorTable -> String -> Color
@@ -126,10 +127,17 @@ set token ( table, seed ) =
             ( newDict, newSeed )
 
 
-flattenToList : Array (Array a) -> List a
-flattenToList xs =
-    Array.foldr Array.append Array.empty xs
-        |> Array.toList
+flattenSourceCode : Array (Array Token) -> List Token
+flattenSourceCode =
+    Array.foldr Array.append Array.empty
+        >> Array.toList
+
+
+flattenSourceCodes : List SourceCode -> List Token
+flattenSourceCodes sources =
+    List.map .content sources
+        |> List.map flattenSourceCode
+        |> List.concat
 
 
 gridPanel : Location.Size -> Location.Pos -> Html.Html msg

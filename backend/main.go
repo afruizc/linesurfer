@@ -35,7 +35,6 @@ func getTokens(source string) ([]chroma.Token, error) {
 	}
 
 	tokens := replaceTabsForSpaces(iterator.Tokens())
-	fmt.Println(tokens)
 
 	return tokens, nil
 }
@@ -44,17 +43,14 @@ func replaceTabsForSpaces(tokens []chroma.Token) []chroma.Token {
 	res := make([]chroma.Token, 0)
 
 	for _, t := range tokens {
-		if t.Value == "\t" {
-			t.Value = "    "
-		}
-
+		t.Value = strings.Replace(t.Value, "\t", "    ", -1)
 		res = append(res, t)
 	}
 
 	return res
 }
 
-const repo = "https://gitlab.com/afruizc/wogiki"
+const repo = "https://github.com/afruizc/linesurfer"
 
 type FileData struct {
 	FilePath string         `json:"path"`
@@ -72,6 +68,10 @@ func isGolangFile(info os.FileInfo) bool {
 	return !info.IsDir() && strings.HasSuffix(info.Name(), ".go")
 }
 
+func isElmFile(info os.FileInfo) bool {
+	return !info.IsDir() && strings.HasSuffix(info.Name(), ".elm")
+}
+
 func (fm *FileMap) walk(path string, info os.FileInfo, err error) error {
 	if err != nil {
 		return err
@@ -80,8 +80,6 @@ func (fm *FileMap) walk(path string, info os.FileInfo, err error) error {
 	if ! isGolangFile(info) {
 		return nil
 	}
-
-	fmt.Println("adding name", path)
 
 	contents, err := readFile(path)
 	if err != nil {
@@ -124,7 +122,6 @@ func getFiles(repoDir string) FileMap {
 	}
 
 	fm := make(FileMap)
-	fmt.Println("starting to walk", localFileName)
 
 	if err := filepath.Walk(localFileName, fm.walk); err != nil {
 		panic(err)
@@ -158,5 +155,4 @@ func HelloServer(w http.ResponseWriter, r *http.Request) {
 		"Content-Type")
 
 	_, _ = w.Write(jsonData)
-	fmt.Println(string(jsonData))
 }
