@@ -1,4 +1,4 @@
-module TestViewer exposing (..)
+module TestViewport exposing (..)
 
 import Array exposing (Array)
 import Expect
@@ -59,12 +59,26 @@ testCases =
             newAtOrigin ( 1, 2 ) 2
                 |> changeViewport 0 { x = 1, y = 0 }
       }
-    , { msg = "move on three lines"
+    , { msg = "move on three lines down dont change offset"
       , input = newAtOrigin ( 1, 2 ) 3
       , move = DownOneChar
       , expected =
             newAtOrigin ( 1, 2 ) 3
                 |> changeViewport 0 { x = 1, y = 0 }
+      }
+    , { msg = "move on three lines down change offset"
+      , input = newAtOrigin ( 1, 2 ) 3 |> changeViewport 0 { x = 1, y = 0 }
+      , move = DownOneChar
+      , expected =
+            newAtOrigin ( 1, 2 ) 3
+                |> changeViewport 1 { x = 1, y = 0 }
+      }
+    , { msg = "move down on three lines down "
+      , input = newAtOrigin ( 1, 2 ) 3 |> changeViewport 1 { x = 1, y = 0 }
+      , move = DownOneChar
+      , expected =
+            newAtOrigin ( 1, 2 ) 3
+                |> changeViewport 1 { x = 1, y = 0 }
       }
     ]
 
@@ -140,6 +154,7 @@ testCases =
 
 runTests =
     Array.repeat 9 True
+        |> Array.set 2 True
 
 
 zip : Array a -> List b -> List ( a, b )

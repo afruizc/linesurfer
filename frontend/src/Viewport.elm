@@ -76,19 +76,19 @@ moveCursor cursorAbsPos viewport =
                 cursorAbsPos
 
         curAbsBegin =
-            viewport.cursor.x + viewport.rowOffset
+            viewport.rowOffset
 
         curAbsEnd =
             curAbsBegin + viewport.size.height
 
-        diff =
+        offsetDiff =
             if
                 cursorInFile.x
                     < curAbsBegin
                     || cursorInFile.x
                     >= curAbsEnd
             then
-                cursorInFile.x - viewport.rowOffset
+                (Debug.log "" <| cursorInFile).x - (viewport.rowOffset + viewport.cursor.x)
 
             else
                 0
@@ -96,14 +96,17 @@ moveCursor cursorAbsPos viewport =
         maxRowOffset =
             viewport.totalHeight - viewport.size.height
 
+        newOffset =
+            clamp 0 maxRowOffset (viewport.rowOffset + offsetDiff)
+
         cursorInView =
             { cursorInFile
-                | x = modBy viewport.size.height cursorInFile.x
+                | x = modBy viewport.size.height (cursorInFile.x + newOffset)
             }
     in
     { viewport
         | cursor = cursorInView
-        , rowOffset = clamp 0 maxRowOffset diff
+        , rowOffset = newOffset
     }
 
 
