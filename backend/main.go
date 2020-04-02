@@ -5,19 +5,17 @@ import (
 	"fmt"
 	"github.com/alecthomas/chroma"
 	"github.com/alecthomas/chroma/lexers"
-	"io/ioutil"
 	"net/http"
 	"os"
-	"os/exec"
-	"path"
-	"path/filepath"
 	"strings"
 )
 
 func main() {
-	fmt.Println("Connect here")
+	fmt.Println("Connect here, tmp:", os.TempDir())
 	http.HandleFunc("/", HelloServer)
-	_ = http.ListenAndServe(":8080", nil)
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		panic(err)
+	}
 }
 
 func checkErr(err error) {
@@ -39,99 +37,54 @@ func getTokens(source string) ([]chroma.Token, error) {
 	return tokens, nil
 }
 
+func trimRightAndReturnCount(s string, sep string) (string, int) {
+	count := 0
+	for strings.HasSuffix(s, sep) {
+		count += 1
+		idx := strings.LastIndex(s, sep)
+		s = s[:idx]
+	}
+
+	return s, count
+}
+
+func addToken(tokenList []chroma.Token, cur chroma.Token) []chroma.Token {
+	cur.Value = strings.Replace(cur.Value, "\t", "    ", -1)
+
+	if cur.Type != chroma.CommentSingle {
+		tokenList = append(tokenList, cur)
+		return tokenList
+	}
+
+	var count int
+	cur.Value, count = trimRightAndReturnCount(cur.Value, "\n")
+	tokenList = append(tokenList, cur)
+
+	for count > 0 {
+
+		tokenList = append(tokenList, chroma.Token{
+			Type:  chroma.Text,
+			Value: "\n"})
+
+		count -= 1
+	}
+
+	return tokenList
+}
+
 func replaceTabsForSpaces(tokens []chroma.Token) []chroma.Token {
 	res := make([]chroma.Token, 0)
 
 	for _, t := range tokens {
-		t.Value = strings.Replace(t.Value, "\t", "    ", -1)
-		res = append(res, t)
+		res = addToken(res, t)
 	}
 
 	return res
 }
 
-const repo = "https://github.com/afruizc/linesurfer"
-
-type FileData struct {
-	FilePath string         `json:"path"`
-	Content  []chroma.Token `json:"content"`
-}
-
-
-type FileMap map[string][]byte
-
-func readFile(path string) ([]byte, error) {
-	return ioutil.ReadFile(path)
-}
-
-func isGolangFile(info os.FileInfo) bool {
-	return !info.IsDir() && strings.HasSuffix(info.Name(), ".go")
-}
-
-func isElmFile(info os.FileInfo) bool {
-	return !info.IsDir() && strings.HasSuffix(info.Name(), ".elm")
-}
-
-func (fm *FileMap) walk(path string, info os.FileInfo, err error) error {
-	if err != nil {
-		return err
-	}
-
-	if ! isGolangFile(info) {
-		return nil
-	}
-
-	contents, err := readFile(path)
-	if err != nil {
-		return err
-	}
-
-	(*fm)[strings.TrimPrefix(path, os.TempDir())] = contents
-	return nil
-}
-
-func getLocalFileName(localDir, repo string) string {
-	_, repoName := path.Split(repo)
-
-	return path.Join(localDir, repoName)
-}
-
-func pathExists(path string) bool {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return false
-	}
-	return true
-}
-
-func downloadFromGit(repo string) {
-	if err := os.Chdir(os.TempDir()); err != nil {
-		panic(err)
-	}
-
-	cmd := exec.Command("git", "clone", repo)
-	if err := cmd.Run(); err != nil {
-		panic(err)
-	}
-}
-
-func getFiles(repoDir string) FileMap {
-	localFileName := getLocalFileName(os.TempDir(), repoDir)
-
-	if ! pathExists(localFileName) {
-		downloadFromGit(repo)
-	}
-
-	fm := make(FileMap)
-
-	if err := filepath.Walk(localFileName, fm.walk); err != nil {
-		panic(err)
-	}
-
-	return fm
-}
-
 func HelloServer(w http.ResponseWriter, r *http.Request) {
-	dataMap := getFiles(repo)
+	const repo = "https://github.com/afruizc/linesurfer"
+	dataMap := GetFiles(repo)
 
 	res := make(map[string]interface{})
 	allFiles := make([]FileData, 0)

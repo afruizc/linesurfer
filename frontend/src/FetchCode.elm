@@ -24,26 +24,35 @@ getSourceCode result =
 
 splitByNewline : List Token -> Array (Array Token)
 splitByNewline tokens =
-    let
-        test _ b =
-            b.value /= "\n"
-
-        listGroups =
-            ArrayExtra.groupWhile test tokens
-    in
-    Array.fromList
-        (List.map trimNewLines listGroups)
+    splitRecursive tokens
+        |> listsToArrays
 
 
-trimNewLines : ( Token, List Token ) -> Array Token
-trimNewLines ( token, list ) =
-    if token.value == "\n" then
-        Array.fromList (List.concat [ list, [ token ] ])
+listsToArrays : List (List a) -> Array (Array a)
+listsToArrays lists =
+    lists
+        |> List.map Array.fromList
+        |> Array.fromList
 
-    else
-        token
-            :: List.append list [ { token_type = "Text", value = "\n" } ]
-            |> Array.fromList
+
+splitRecursive : List Token -> List (List Token)
+splitRecursive tokens =
+    case tokens of
+        [] ->
+            []
+
+        xs ->
+            let
+                ( line, rest ) =
+                    ArrayExtra.span (.value >> (/=) "\n") xs
+
+                lineWithNewLine =
+                    Debug.log "line" line ++ [ { token_type = "Text", value = "\n" } ]
+
+                restTrimmedNewLine =
+                    List.drop 1 rest
+            in
+            lineWithNewLine :: splitRecursive restTrimmedNewLine
 
 
 createViewer : SourceCode -> CodeViewer
