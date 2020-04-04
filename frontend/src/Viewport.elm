@@ -36,10 +36,12 @@ new size cursor rowOffset totalHeight =
 
 
 getAbsoluteNewCursor : Movement -> Viewport -> Location.Pos
-getAbsoluteNewCursor mov model =
+getAbsoluteNewCursor mov viewport =
     let
         pos =
-            model.cursor
+            { x = viewport.rowOffset + viewport.cursor.x
+            , y = viewport.cursor.y
+            }
     in
     case mov of
         RightOneChar ->
@@ -49,19 +51,19 @@ getAbsoluteNewCursor mov model =
             { pos | y = pos.y - 1 }
 
         UpOneChar ->
-            { pos | x = model.rowOffset + pos.x - 1 }
+            { pos | x = pos.x - 1 }
 
         DownOneChar ->
-            { pos | x = model.rowOffset + pos.x + 1 }
+            { pos | x = pos.x + 1 }
 
         PageUp ->
-            { pos | x = model.rowOffset + pos.x - 10 }
+            { pos | x = pos.x - 10 }
 
         PageDown ->
-            { pos | x = model.rowOffset + pos.x + 10 }
+            { pos | x = pos.x + 10 }
 
         EndFile ->
-            { pos | x = model.totalHeight - 1 }
+            { pos | x = viewport.totalHeight - 1 }
 
         BegFile ->
             { pos | x = 0 }

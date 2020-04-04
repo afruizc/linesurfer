@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func main() {
+func main1() {
 	fmt.Println("Connect here, tmp:", os.TempDir())
 	http.HandleFunc("/", HelloServer)
 	if err := http.ListenAndServe(":8080", nil); err != nil {
@@ -97,7 +97,7 @@ func HelloServer(w http.ResponseWriter, r *http.Request) {
 		allFiles = append(allFiles, fileData)
 	}
 
-	res["data"] = allFiles
+	res["declarations"] = allFiles
 
 	jsonData, err := json.Marshal(res)
 	checkErr(err)
