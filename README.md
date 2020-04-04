@@ -5,6 +5,11 @@ Surf on the lines
 
 ![demo](demo.gif)
 
+This is a thing that is supposed to optimize your
+workflow when reading through code.
+
+For now only some basic functionality is implemented.
+
 # Attack Plan
 
 - ~~Display small file.~~
